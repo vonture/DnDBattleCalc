@@ -50,29 +50,25 @@ var weaponTypes =
 
 var armorTypes = 
 {
-    "Constitution -3":                  { "value": -3, "modifier": 7,},
-    "Constitution -2":                  { "value": -2, "modifier": 8,},
-    "Constitution -1":                  { "value": -1, "modifier": 9,},
-    "Unarmored":                        { "value": 0, "modifier": 10,},
-    "Padded/Leather":                   { "value": 1, "modifier": 11,},
-    "Studded leather/Hide":             { "value": 2, "modifier": 12,},
-    "Chain shirt":                      { "value": 3, "modifier": 13,},
-    "Scale Mail/Breastplate/Ring Mail": { "value": 4, "modifier": 14,},
-    "Half Plate":                       { "value": 5, "modifier": 15,},
-    "Chain Mail":                       { "value": 6, "modifier": 16,},
-    "Splint":                           { "value": 7, "modifier": 17,},
-    "Plate":                            { "value": 8, "modifier": 18,},
-    "Constitution +1":                  { "value": 9, "modifier": 19,},
-    "Constitution +2":                  { "value": 10, "modifier": 20,},
-    "Constitution +3":                  { "value": 11, "modifier": 21,},
-    "Constitution +4":                  { "value": 12, "modifier": 22,},
-    "Constitution +5":                  { "value": 13, "modifier": 23,},
-};
-
-var shieldTypes = 
-{
-    "Unshielded": false,
-    "Shielded": true,
+    "5": -5,
+    "6": -4,
+    "7": -3,
+    "8": -2,
+    "9": -1,
+    "10": 0,
+    "11": 1,
+    "12": 2,
+    "13": 3, 
+    "14": 4,
+    "15": 5,
+    "16": 6,
+    "17": 7,
+    "18": 8,
+    "19": 9,
+    "20": 10,
+    "21": 11,
+    "22": 12,
+    "23": 13,
 };
 
 var weatherTypes = 
@@ -97,16 +93,35 @@ var terrainTypes =
     "Fortified": 4,
 };
 
+
+function addCombo(obj, title, memberName, nameValueMap)
+{
+    var row = obj.element.insertRow();
+    row.insertCell().appendChild(document.createTextNode(title));
+
+    var combo = document.createElement("SELECT");
+    for (var name in nameValueMap)
+    {
+        var option = document.createElement("option");
+        option.text = name;
+        combo.add(option);
+    }
+    row.insertCell().appendChild(combo);
+    obj[memberName] = combo;
+}
+
 class army
 {
     constructor(element)
     {
         this.element = element;
 
+        this.element.style.border = "1px solid black";
+
         var addCombo = function(obj, title, memberName, nameValueMap)
         {
-            var titleElem = document.createTextNode(title);
-            obj.element.appendChild(titleElem);
+            var row = obj.element.insertRow();
+            row.insertCell().appendChild(document.createTextNode(title));
 
             var combo = document.createElement("SELECT");
             for (var name in nameValueMap)
@@ -115,7 +130,7 @@ class army
                 option.text = name;
                 combo.add(option);
             }
-            obj.element.appendChild(combo);
+            row.insertCell().appendChild(combo);
             obj[memberName] = combo;
         }
 
@@ -125,8 +140,14 @@ class army
         addCombo(this, "Exhaustion: ", "exhaustionCombo", exhaustionTypes);
         addCombo(this, "Weapon: ", "weaponCombo", weaponTypes);
         addCombo(this, "Armor: ", "armorCombo", armorTypes);
-        addCombo(this, "Shield: ", "shieldCombo", shieldTypes);
         addCombo(this, "Leadership experience: ", "leadershipExperienceCombo", experienceTypes);
+
+
+        var unitSizeRow = this.element.insertRow();
+        unitSizeRow.insertCell().appendChild(document.createTextNode("Unit size: "));
+        this.unitSizeBox = document.createElement("INPUT");
+        this.unitSizeBox.setAttribute("type", "number");
+        unitSizeRow.insertCell().appendChild(this.unitSizeBox);
     }
 
     get terrain()
@@ -167,6 +188,32 @@ class army
     get leadershipExperience()
     {
         return experienceTypes[this.leadershipExperienceCombo.value];
+    }
+
+    get unitSize()
+    {
+        return this.unitSizeBox.value;
+    }
+
+    getAttackModifier(weather)
+    {
+        return weather.weather() + this.terrain + this.raceSize + this.exhaustion + this.weapon;
+    }
+}
+
+class weather
+{
+    constructor(element)
+    {
+        this.element = element;
+        this.element.style.border = "1px solid black";
+
+        addCombo(this, "Weather: ", "weatherCombo", weatherTypes);
+    }
+
+    get weather()
+    {
+        return weatherTypes[this.weatherCombo.value];
     }
 }
 
