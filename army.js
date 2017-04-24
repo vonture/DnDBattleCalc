@@ -163,6 +163,10 @@ class army
 
         this.inputOutputBox = document.createElement("INPUT");
         this.inputOutputBox.setAttribute("type", "text");
+        this.inputOutputBox.onfocus = function()
+        {
+            this.select();
+        };
         var inputOutputRow = this.element.insertRow();
 
         var loadButton = document.createElement("button");
