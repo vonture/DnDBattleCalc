@@ -1,28 +1,27 @@
 var experienceTypes = 
 {
-    "Rabble": -4,
-    "Militia": -3,
-    "Green": -2,
-    "Rookie": -1,
-    "Regulars": 0,
-    "Disciplined": 1,
-    "Veteran": 2,
-    "Seasoned": 3,
-    "Crack": 4,
-    "Legendary": 5,
+    "Rabble": { "unit": -4, "leadership": 0.8 },
+    "Militia": { "unit": -3, "leadership": 0.85 },
+    "Green": { "unit": -2, "leadership": 0.9 },
+    "Rookie": { "unit": -1, "leadership": 0.95 },
+    "Regulars": { "unit": 0, "leadership": 1 },
+    "Disciplined": { "unit": 1, "leadership": 1.5 },
+    "Veteran": { "unit": 2, "leadership": 1.1 },
+    "Seasoned": { "unit": 3, "leadership": 1.15 },
+    "Crack": { "unit": 4, "leadership": 1.2 },
+    "Legendary": { "unit": 5, "leadership": 1.25 },
 };
 
 var raceSizeTypes = 
 {
-    "Fine" : 16,
-    "Diminutive" : -4,
-    "Tiny" : -2,
-    "Small" : -1,
-    "Medium" : 0,
-    "Large" : 4,
-    "Huge" : 24,
-    "Gargantuan" : 128,
-    "Colossal" : 256,
+    "Fine" : { "hp": 0.17, "attack": 24, "defaultSize": 120 },
+    "Tiny" : { "hp": 0.25, "attack": 16, "defaultSize": 80 },
+    "Small" : { "hp": 0.67, "attack": 6, "defaultSize": 30 },
+    "Medium" : { "hp": 1, "attack": 4, "defaultSize": 20 },
+    "Large" : { "hp": 32, "attack": 0.5, "defaultSize": 5 },
+    "Huge" : { "hp": 64, "attack": 0.125, "defaultSize": 1 },
+    "Gargantuan" : { "hp": 128, "attack": 0.0625, "defaultSize": 1 },
+    "Colossal" : { "hp": 256, "attack": 0.03125, "defaultSize": 1 },
 };
 
 var exhaustionTypes = 
@@ -42,33 +41,38 @@ var weaponTypes =
     "1d8": 0,
     "1d10": 1,
     "1d12": 2,
-    "<2d8": 4,
-    "<3d8": 8,
-    "<4d8": 16,
-    "<5d8": 32,
+    "=<2d8": 4,
+    "=<3d8": 8,
+    "=<4d8": 12,
+    "=<5d8": 16,
+    "=<6d8": 20,
+    "=<7d8": 24,
+    "=<8d8": 28,
+    "=<9d8": 32,
+    "=<10d8": 36,
 };
 
 var armorTypes = 
 {
-    "5": -5,
-    "6": -4,
-    "7": -3,
-    "8": -2,
-    "9": -1,
-    "10": 0,
-    "11": 1,
-    "12": 2,
-    "13": 3, 
-    "14": 4,
-    "15": 5,
-    "16": 6,
-    "17": 7,
-    "18": 8,
-    "19": 9,
-    "20": 10,
-    "21": 11,
-    "22": 12,
-    "23": 13,
+    "5": 5,
+    "6": 6,
+    "7": 7,
+    "8": 8,
+    "9": 9,
+    "10": 10,
+    "11": 11,
+    "12": 12,
+    "13": 13, 
+    "14": 14,
+    "15": 15,
+    "16": 16,
+    "17": 17,
+    "18": 18,
+    "19": 19,
+    "20": 20,
+    "21": 21,
+    "22": 22,
+    "23": 23,
 };
 
 var weatherTypes = 
@@ -94,7 +98,7 @@ var terrainTypes =
 };
 
 
-function addCombo(obj, title, memberName, nameValueMap)
+function addCombo(obj, title, memberName, nameValueMap, defaultValue)
 {
     var row = obj.element.insertRow();
     row.insertCell().appendChild(document.createTextNode(title));
@@ -106,8 +110,22 @@ function addCombo(obj, title, memberName, nameValueMap)
         option.text = name;
         combo.add(option);
     }
+    combo.value = defaultValue;
     row.insertCell().appendChild(combo);
     obj[memberName] = combo;
+}
+
+function addNumber(obj, title, memberName, defaultValue)
+{
+    var row = obj.element.insertRow();
+    row.insertCell().appendChild(document.createTextNode(title));
+
+    var input = document.createElement("INPUT");
+    input.setAttribute("type", "number");
+    input.value = defaultValue;
+    row.insertCell().appendChild(input);
+
+    obj[memberName] = input;
 }
 
 class army
@@ -118,36 +136,18 @@ class army
 
         this.element.style.border = "1px solid black";
 
-        var addCombo = function(obj, title, memberName, nameValueMap)
-        {
-            var row = obj.element.insertRow();
-            row.insertCell().appendChild(document.createTextNode(title));
+        addCombo(this, "Terrain: ", "terrainCombo", terrainTypes, "Level");
+        addCombo(this, "Experience: ", "experienceCombo", experienceTypes, "Regulars");
+        addCombo(this, "Race size: ", "raceSizeCombo", raceSizeTypes, "Medium");
+        addCombo(this, "Exhaustion: ", "exhaustionCombo", exhaustionTypes, "Fresh");
+        addCombo(this, "Weapon: ", "weaponCombo", weaponTypes, "1d8");
+        addCombo(this, "Armor: ", "armorCombo", armorTypes, "16");
+        addCombo(this, "Leadership experience: ", "leadershipExperienceCombo", experienceTypes, "Regulars");
 
-            var combo = document.createElement("SELECT");
-            for (var name in nameValueMap)
-            {
-                var option = document.createElement("option");
-                option.text = name;
-                combo.add(option);
-            }
-            row.insertCell().appendChild(combo);
-            obj[memberName] = combo;
-        }
+        addNumber(this, "Current units: ", "currentUnitsBox", 20);
+        addNumber(this, "Max units: ", "maxUnitsBox", 20);
 
-        addCombo(this, "Terrain: ", "terrainCombo", terrainTypes);
-        addCombo(this, "Experience: ", "experienceCombo", experienceTypes);
-        addCombo(this, "Race size: ", "raceSizeCombo", raceSizeTypes);
-        addCombo(this, "Exhaustion: ", "exhaustionCombo", exhaustionTypes);
-        addCombo(this, "Weapon: ", "weaponCombo", weaponTypes);
-        addCombo(this, "Armor: ", "armorCombo", armorTypes);
-        addCombo(this, "Leadership experience: ", "leadershipExperienceCombo", experienceTypes);
-
-
-        var unitSizeRow = this.element.insertRow();
-        unitSizeRow.insertCell().appendChild(document.createTextNode("Unit size: "));
-        this.unitSizeBox = document.createElement("INPUT");
-        this.unitSizeBox.setAttribute("type", "number");
-        unitSizeRow.insertCell().appendChild(this.unitSizeBox);
+        addNumber(this, "Current HP: ", "currentHPBox", 1);
     }
 
     get terrain()
@@ -157,7 +157,7 @@ class army
 
     get experience()
     {
-        return experienceTypes[this.experienceCombo.value];
+        return experienceTypes[this.experienceCombo.value].unit;
     }
 
     get raceSize()
@@ -167,7 +167,7 @@ class army
 
     get exhaustion()
     {
-        return exhaustionCombo[this.exhaustionCombo.value];
+        return exhaustionTypes[this.exhaustionCombo.value];
     }
 
     get weapon()
@@ -187,17 +187,42 @@ class army
 
     get leadershipExperience()
     {
-        return experienceTypes[this.leadershipExperienceCombo.value];
+        return experienceTypes[this.leadershipExperienceCombo.value].leadership;
     }
 
-    get unitSize()
+    get currentUnits()
     {
-        return this.unitSizeBox.value;
+        return this.currentUnitsBox.value;
+    }
+
+    get maxUnits()
+    {
+        return this.maxUnitsBox.value;
+    }
+
+    get currentHP()
+    {
+        return this.currentHPBox.value;
     }
 
     getAttackModifier(weather)
     {
-        return weather.weather() + this.terrain + this.raceSize + this.exhaustion + this.weapon;
+        return weather.weather + this.experience + this.terrain + this.exhaustion + this.weapon;
+    }
+
+    getDefenseModifier()
+    {
+        return this.terrain + this.experience + this.exhaustion + this.weapon;
+    }
+
+    getMaxHP()
+    {
+        return this.experience + this.exhaustion + this.weapon + this.armor + (this.raceSize.hp * this.raceSize);
+    }
+
+    getAttackDivisor()
+    {
+        return this.raceSize.attack;
     }
 }
 
@@ -208,7 +233,7 @@ class weather
         this.element = element;
         this.element.style.border = "1px solid black";
 
-        addCombo(this, "Weather: ", "weatherCombo", weatherTypes);
+        addCombo(this, "Weather: ", "weatherCombo", weatherTypes, "Clear");
     }
 
     get weather()
@@ -219,5 +244,53 @@ class weather
 
 function runBattle(army0, army1, weather, logElement)
 {
-    logElement.appendChild(document.createTextNode("Battle!"));
+    logElement.innerHTML = "";
+    function appendLine(logElement, line)
+    {
+        logElement.appendChild(document.createTextNode(line));
+        logElement.appendChild(document.createElement("BR"));
+    }
+
+    appendLine(logElement, "Attack info:");
+    appendLine(logElement, "currentUnits: " + army0.currentUnits);
+    appendLine(logElement, "maxUnits: " + army0.maxUnits);
+
+    var hpPerc = (army0.currentUnits / army0.maxUnits);
+    appendLine(logElement, "unit percent: " + hpPerc);
+    appendLine(logElement, "attack divisor: " + army0.getAttackDivisor());
+
+    var rollCount = hpPerc / army0.getAttackDivisor();
+    appendLine(logElement, "roll count: " + rollCount);
+
+    var rolls = roll(rollCount, 20);
+    appendLine(logElement, "rolls: [ " + rolls + " ]");
+
+    var attackModifier = army0.getAttackModifier(weather);
+    appendLine(logElement, "attack modifier: " + attackModifier);
+
+    var attackModifiedRolls = rolls.slice();
+    for (var i = 0; i < attackModifiedRolls.length; i++)
+    {
+        attackModifiedRolls[i] += attackModifier;
+    }
+    appendLine(logElement, "rolls with attack modifier: [ " + attackModifiedRolls + " ]");
+
+    appendLine(logElement, "");
+
+    appendLine(logElement, "Defense info:");
+    appendLine(logElement, "defenseModifier: " + army1.getDefenseModifier());
+
+    var defenseModifiedRolls = [];
+    var totalDamage = 0;
+    for (var i = 0; i < attackModifiedRolls.length; i++)
+    {
+        var damage = Math.max(attackModifiedRolls[i] - army1.getDefenseModifier(), 0);
+        defenseModifiedRolls.push(damage);
+        totalDamage += damage;
+    }
+    appendLine(logElement, "hits: [" + defenseModifiedRolls + " ]");
+    appendLine(logElement, "total damage: " + totalDamage);
+
+    var resultHP = army1.currentHP - totalDamage;
+    appendLine(logElement, "result HP: " + resultHP);
 }
