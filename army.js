@@ -158,8 +158,34 @@ class army
             this.army.currentUnitsBox.value = this.army.maxUnitsBox.value;
             this.army.currentHPBox.value = this.army.getMaxHP();
         };
-        var row = this.element.insertRow();
-        row.insertCell().appendChild(initializeButton);
+        var initializeRow = this.element.insertRow();
+        initializeRow.insertCell().appendChild(initializeButton);
+
+        this.inputOutputBox = document.createElement("INPUT");
+        this.inputOutputBox.setAttribute("type", "text");
+        var inputOutputRow = this.element.insertRow();
+
+        var loadButton = document.createElement("button");
+        loadButton.appendChild(document.createTextNode("Load"));
+        loadButton.army = this;
+        loadButton.onclick = function()
+        {
+            this.army.fromJson(this.army.inputOutputBox.value);
+        };
+
+        var saveButton = document.createElement("button");
+        saveButton.appendChild(document.createTextNode("Save"));
+        saveButton.army = this;
+        saveButton.onclick = function()
+        {
+            this.army.inputOutputBox.value = this.army.toJson();
+        };
+
+        var loadSaveCell = inputOutputRow.insertCell();
+        loadSaveCell.appendChild(loadButton);
+        loadSaveCell.appendChild(saveButton);
+
+        inputOutputRow.insertCell().appendChild(this.inputOutputBox);
     }
 
     get terrain()
@@ -190,11 +216,6 @@ class army
     get armor()
     {
         return armorTypes[this.armorCombo.value];
-    }
-
-    get shield()
-    {
-        return shieldTypes[this.shieldCombo.value];
     }
 
     get leadershipExperience()
@@ -235,6 +256,46 @@ class army
     getAttackDivisor()
     {
         return this.raceSize.attack;
+    }
+
+    updateJson()
+    {
+        this.inputOutputBox.value = this.toJson();
+    }
+
+    toJson()
+    {
+        var obj =
+        {
+            "terrain": this.terrainCombo.value,
+            "experience": this.experienceCombo.value,
+            "raceSize": this.raceSizeCombo.value,
+            "exhaustion": this.exhaustionCombo.value,
+            "weapon": this.weaponCombo.value,
+            "armor": this.armorCombo.value,
+            "leadershipExperience": this.leadershipExperienceCombo.value,
+            "currentUnits":  this.currentUnitsBox.value,
+            "maxUnits": this.maxUnitsBox.value,
+            "currentHP": this.currentHPBox.value,
+        };
+
+        return JSON.stringify(obj);
+    }
+
+    fromJson(json)
+    {
+        var obj = JSON.parse(json);
+
+        this.terrainCombo.value = obj.terrain;
+        this.experienceCombo.value = obj.experience;
+        this.raceSizeCombo.value = obj.raceSize;
+        this.exhaustionCombo.value = obj.exhaustion;
+        this.weaponCombo.value = obj.weapon;
+        this.armorCombo.value = obj.armor;
+        this.leadershipExperienceCombo.value = obj.leadershipExperience;
+        this.currentUnitsBox.value = obj.currentUnits;
+        this.maxUnitsBox.value = obj.maxUnits;
+        this.currentHPBox.value = obj.currentHP;
     }
 }
 
@@ -301,9 +362,20 @@ function runBattle(army0, army1, weather, logElement)
             hitsCount++;
         }
     }
-    appendLine(logElement, "hits: [" + hits + " ]");
+    appendLine(logElement, "hits: [ " + hits + " ]");
     appendLine(logElement, "hits count: " + hitsCount);
 
     var resultHP = army1.currentHP - hitsCount;
     appendLine(logElement, "result HP: " + resultHP);
+
+    var hpLossPerc = hitsCount / army1.currentHP;
+    appendLine(logElement, "percent HP loss: " + (hpLossPerc * 100));
+
+    var resultUnits = army1.currentUnits - (army1.currentUnits * hpLossPerc);
+    appendLine(logElement, "result units: " + resultUnits);
+
+    army1.currentHPBox.value = resultHP;
+    army1.currentUnitsBox.value = resultUnits;
+
+    army1.updateJson();
 }
