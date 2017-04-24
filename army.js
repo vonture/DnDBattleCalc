@@ -14,7 +14,7 @@ var experienceTypes =
 
 var raceSizeTypes = 
 {
-    "Fine" : { "hp": 0.17, "attack": 24, "defaultSize": 120 },
+    "Fine" : { "hp": 0.17, "attack": 24, "defaultSize": 120, },
     "Tiny" : { "hp": 0.25, "attack": 16, "defaultSize": 80 },
     "Small" : { "hp": 0.67, "attack": 6, "defaultSize": 30 },
     "Medium" : { "hp": 1, "attack": 4, "defaultSize": 20 },
@@ -147,7 +147,19 @@ class army
         addNumber(this, "Current units: ", "currentUnitsBox", 20);
         addNumber(this, "Max units: ", "maxUnitsBox", 20);
 
-        addNumber(this, "Current HP: ", "currentHPBox", 1);
+        addNumber(this, "Current HP: ", "currentHPBox", 20);
+
+        var initializeButton = document.createElement("button");
+        initializeButton.appendChild(document.createTextNode("Initialize Units and HP"));
+        initializeButton.army = this;
+        initializeButton.onclick = function()
+        {
+            this.army.maxUnitsBox.value = this.army.raceSize.defaultSize;
+            this.army.currentUnitsBox.value = this.army.maxUnitsBox.value;
+            this.army.currentHPBox.value = this.army.getMaxHP();
+        };
+        var row = this.element.insertRow();
+        row.insertCell().appendChild(initializeButton);
     }
 
     get terrain()
@@ -212,12 +224,12 @@ class army
 
     getDefenseModifier()
     {
-        return this.terrain + this.experience + this.exhaustion + this.weapon;
+        return this.terrain + this.experience + this.exhaustion + this.armor;
     }
 
     getMaxHP()
     {
-        return this.experience + this.exhaustion + this.weapon + this.armor + (this.raceSize.hp * this.raceSize);
+        return this.experience + this.exhaustion + this.weapon + this.armor + (this.raceSize.hp * this.maxUnits);
     }
 
     getAttackDivisor()
@@ -255,11 +267,9 @@ function runBattle(army0, army1, weather, logElement)
     appendLine(logElement, "currentUnits: " + army0.currentUnits);
     appendLine(logElement, "maxUnits: " + army0.maxUnits);
 
-    var hpPerc = (army0.currentUnits / army0.maxUnits);
-    appendLine(logElement, "unit percent: " + hpPerc);
     appendLine(logElement, "attack divisor: " + army0.getAttackDivisor());
 
-    var rollCount = hpPerc / army0.getAttackDivisor();
+    var rollCount = army0.currentUnits / army0.getAttackDivisor();
     appendLine(logElement, "roll count: " + rollCount);
 
     var rolls = roll(rollCount, 20);
@@ -278,19 +288,22 @@ function runBattle(army0, army1, weather, logElement)
     appendLine(logElement, "");
 
     appendLine(logElement, "Defense info:");
-    appendLine(logElement, "defenseModifier: " + army1.getDefenseModifier());
+    appendLine(logElement, "defense modifier: " + army1.getDefenseModifier());
 
-    var defenseModifiedRolls = [];
-    var totalDamage = 0;
+    var hits = [];
+    var hitsCount = 0;
     for (var i = 0; i < attackModifiedRolls.length; i++)
     {
-        var damage = Math.max(attackModifiedRolls[i] - army1.getDefenseModifier(), 0);
-        defenseModifiedRolls.push(damage);
-        totalDamage += damage;
+        var hit = (attackModifiedRolls[i] - army1.getDefenseModifier()) >= 0;
+        hits.push(hit);
+        if (hit)
+        {
+            hitsCount++;
+        }
     }
-    appendLine(logElement, "hits: [" + defenseModifiedRolls + " ]");
-    appendLine(logElement, "total damage: " + totalDamage);
+    appendLine(logElement, "hits: [" + hits + " ]");
+    appendLine(logElement, "hits count: " + hitsCount);
 
-    var resultHP = army1.currentHP - totalDamage;
+    var resultHP = army1.currentHP - hitsCount;
     appendLine(logElement, "result HP: " + resultHP);
 }
